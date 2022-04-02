@@ -28,6 +28,7 @@ import org.slf4j.LoggerFactory
 class HttpServerVerticle : CoroutineVerticle() {
   companion object {
     private val logger = LoggerFactory.getLogger(HttpServerVerticle::class.java)!!
+    private val validHttpMethods = HttpMethod.values().associateBy { it.name() }
   }
 
   lateinit var cfg: Config
@@ -101,7 +102,8 @@ class HttpServerVerticle : CoroutineVerticle() {
       throw HttpException.badRequest("no method in path")
     var path = originPath.substring(0, methodPos)
     val methodStr = originPath.substring(methodPos + 1)
-    val method = HttpMethod.valueOf(methodStr.uppercase())
+    val method = validHttpMethods[methodStr.uppercase()]
+      ?: throw HttpException(HttpResponseStatus.METHOD_NOT_ALLOWED.code(), methodStr)
     val oneinBody = ctx.bodyAsJson
     logger.debug("originPath: {}, oneinBody: {}", originPath, oneinBody)
     if (oneinBody == null)
