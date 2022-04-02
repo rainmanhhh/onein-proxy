@@ -78,10 +78,9 @@ class HttpServerVerticle : CoroutineVerticle() {
         if (unwrappedOneinReq.body == null) targetReq.send().await()
         else targetReq.sendJsonObject(unwrappedOneinReq.body).await()
 
-      val resCode = serviceRes.statusCode()
       val resBodyJson = wrapServiceResBody(serviceRes.bodyAsBuffer())
 
-      ctx.response().setStatusCode(resCode).putHeader(
+      ctx.response().putHeader(
         HttpHeaders.CONTENT_TYPE, "application/json;charset=utf-8"
       ).end(
         resBodyJson?.toBuffer() ?: Buffer.buffer("null")
