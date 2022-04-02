@@ -33,6 +33,7 @@ class MainVerticle : CoroutineVerticle() {
         .setInstances(cfg.vertx.eventLoopPoolSize)
     ).await()
     vertx.close().await()
+    logger.info("MainVerticle started")
   }
 
   private suspend fun readConfig() {
