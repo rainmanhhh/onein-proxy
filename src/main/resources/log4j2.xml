@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN" monitorInterval="30">
+  <Properties>
+    <Property name="LOG_PATH" value="./logs"/>
+    <Property name="LOG_FILE" value="./logs/default.log"/>
+    <Property name="CONSOLE_LAYOUT"
+      value="%style{%d{yyyy-MM-dd HH:mm:ss.SSS}}{Blue,Bright} %highlight{${LOG_LEVEL_PATTERN:-%5p}}{FATAL=bg_red, ERROR=red, WARN=yellow, INFO=green, DEBUG=grey, TRACE=blue} %style{%pid}{magenta} --- %style{[%15.15t] %-40.40c{1.}}{cyan,Bright} : %m%n%ex"/>
+    <Property name="FILE_LAYOUT"
+      value="%d{yyyy-MM-dd HH:mm:ss.SSS} ${LOG_LEVEL_PATTERN:-%5p} %pid --- [%15.15t] %-40.40c{1.} : %m%n%ex"/>
+  </Properties>
+
+  <Appenders>
+    <Console name="Console" target="SYSTEM_OUT">
+      <PatternLayout pattern="${CONSOLE_LAYOUT}"/>
+    </Console>
+    <RollingFile name="RollingFile" fileName="${LOG_FILE}"
+      filePattern="${LOG_PATH}/default.%d{yyyy-MM-dd}.%i.log.gz">
+      <PatternLayout pattern="${FILE_LAYOUT}"/>
+      <Policies>
+        <TimeBasedTriggeringPolicy/>
+        <SizeBasedTriggeringPolicy size="50MB"/>
+      </Policies>
+    </RollingFile>
+  </Appenders>
+  <Loggers>
+    <Logger name="com.gitee.hnsfy" level="debug" additivity="false">
+      <AppenderRef ref="Console"/>
+    </Logger>
+    <Root level="info">
+      <AppenderRef ref="Console"/>
+      <AppenderRef ref="RollingFile"/>
+    </Root>
+  </Loggers>
+</Configuration>
