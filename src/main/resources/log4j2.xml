@@ -23,7 +23,7 @@
     </RollingFile>
   </Appenders>
   <Loggers>
-    <Logger name="com.gitee.hnsfy" level="debug" additivity="false">
+    <Logger name="ez" level="debug" additivity="false">
       <AppenderRef ref="Console"/>
     </Logger>
     <Root level="info">
