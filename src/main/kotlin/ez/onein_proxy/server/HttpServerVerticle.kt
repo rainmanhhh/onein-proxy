@@ -10,7 +10,6 @@ import io.vertx.core.http.HttpHeaders
 import io.vertx.core.http.HttpMethod
 import io.vertx.core.http.HttpServer
 import io.vertx.core.json.Json
-import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
 import io.vertx.ext.web.Router
 import io.vertx.ext.web.RoutingContext
@@ -78,12 +77,15 @@ class HttpServerVerticle : CoroutineVerticle() {
         if (unwrappedOneinReq.body == null) targetReq.send().await()
         else targetReq.sendJsonObject(unwrappedOneinReq.body).await()
 
-      val resBodyJson = wrapServiceResBody(serviceRes.bodyAsBuffer())
+      val resStatus = serviceRes.statusCode()
+      val resBodyBuffer =
+        if (resStatus < 200 || resStatus >= 400) serviceRes.bodyAsBuffer()
+        else wrapServiceResBody(serviceRes.bodyAsBuffer()).toBuffer()
 
       ctx.response().putHeader(
         HttpHeaders.CONTENT_TYPE, "application/json;charset=utf-8"
       ).end(
-        resBodyJson?.toBuffer() ?: Buffer.buffer("null")
+        resBodyBuffer ?: Buffer.buffer("null")
       ).await()
     } catch (e: Throwable) {
       logger.error("handleReq error! req: {}", ctx.normalizedPath(), e)
@@ -140,18 +142,10 @@ class HttpServerVerticle : CoroutineVerticle() {
     )
   }
 
-  private fun wrapServiceResBody(buffer: Buffer?): JsonObject? {
-    if (buffer == null) return null
-    val jsonObj = when (val decodeValue = Json.decodeValue(buffer)) {
-      null -> null
-      is JsonObject -> decodeValue
-      is JsonArray -> jsonObjectOf(cfg.resBodyKey to decodeValue)
-      is Boolean -> jsonObjectOf(cfg.resBodyKey to decodeValue)
-      is Number -> jsonObjectOf(cfg.resBodyKey to decodeValue)
-      is String -> jsonObjectOf(cfg.resBodyKey to decodeValue)
-      else -> throw HttpException.internalErr("invalid target res type: ${decodeValue.javaClass}")
-    }
-    return wrapPrimitiveArrays(jsonObj?.map)?.let { JsonObject(it) }
+  private fun wrapServiceResBody(buffer: Buffer?): JsonObject {
+    val decodeValue = if (buffer == null) null else Json.decodeValue(buffer)
+    val jsonObj = jsonObjectOf(cfg.resBodyKey to decodeValue)
+    return JsonObject(wrapPrimitiveArrays(jsonObj.map))
   }
 
   private fun wrapPrimitiveArrays(root: MutableMap<String, Any?>?): MutableMap<String, Any?>? {
