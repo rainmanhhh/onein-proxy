@@ -32,7 +32,9 @@ class MainVerticle : CoroutineVerticle() {
       DeploymentOptions()
         .setInstances(cfg.vertx.eventLoopPoolSize)
     ).await()
-    vertx.close().await()
+    vertx.close {
+      logger.info("launcher vertx instance closed")
+    }
     logger.info("MainVerticle started")
   }
 
