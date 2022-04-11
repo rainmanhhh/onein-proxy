@@ -6,7 +6,7 @@ import io.vertx.core.http.HttpMethod
 
 class UnwrappedOneinReq(
   val path: String,
-  val method: HttpMethod?,
+  val method: HttpMethod,
   val headers: MultiMap?,
   val query: MultiMap?,
   val body: Buffer?

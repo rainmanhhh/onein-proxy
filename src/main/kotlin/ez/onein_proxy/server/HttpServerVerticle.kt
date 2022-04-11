@@ -68,7 +68,7 @@ class HttpServerVerticle : CoroutineVerticle() {
       val unwrappedOneinReq = unwrapOneinReq(ctx)
 
       val targetReq = webClient.requestAbs(
-        unwrappedOneinReq.method ?: ctx.request().method(),
+        unwrappedOneinReq.method,
         cfg.gatewayUrl + unwrappedOneinReq.path
       )
       unwrappedOneinReq.headers?.let { targetReq.putHeaders(it) }
@@ -113,12 +113,12 @@ class HttpServerVerticle : CoroutineVerticle() {
     val methodStr = originPath.substring(methodPos + 1)
     val method = validHttpMethods[methodStr.uppercase()]
       ?: throw HttpException(HttpResponseStatus.METHOD_NOT_ALLOWED.code(), methodStr)
+    val headers = ctx.request().headers()
     val oneinBody = ctx.bodyAsJson
     logger.debug("originPath: {}, oneinBody: {}", originPath, oneinBody)
     if (oneinBody == null)
-      return UnwrappedOneinReq(path, null, null, null, null)
+      return UnwrappedOneinReq(path, method, headers, null, null)
     val paramPrefixSeparator = Config.paramPrefixSeparator
-    val headers = MultiMap.caseInsensitiveMultiMap()
     val query = MultiMap.caseInsensitiveMultiMap()
     val newJsonBody = JsonObject()
     var newNonJsonBody: Buffer? = null
