@@ -23,9 +23,9 @@
     </RollingFile>
   </Appenders>
   <Loggers>
-    <Logger name="ez" level="debug" additivity="false">
-      <AppenderRef ref="RollingFile"/>
-    </Logger>
+<!--    <Logger name="ez" level="debug" additivity="false">-->
+<!--      <AppenderRef ref="RollingFile"/>-->
+<!--    </Logger>-->
     <Root level="info">
       <AppenderRef ref="RollingFile"/>
     </Root>
