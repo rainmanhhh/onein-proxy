@@ -75,7 +75,7 @@ class HttpServerVerticle : CoroutineVerticle() {
       unwrappedOneinReq.query?.let { targetReq.queryParams().addAll(it) }
       val serviceRes =
         if (unwrappedOneinReq.body == null) targetReq.send().await()
-        else targetReq.sendJsonObject(unwrappedOneinReq.body).await()
+        else targetReq.sendBuffer(unwrappedOneinReq.body).await()
 
       val resStatus = serviceRes.statusCode()
       val originResBodyBuffer = serviceRes.bodyAsBuffer()
@@ -83,7 +83,11 @@ class HttpServerVerticle : CoroutineVerticle() {
         if (resStatus < 200 || resStatus >= 400) originResBodyBuffer
         else wrapServiceResBody(originResBodyBuffer).toBuffer()
       if (logger.isDebugEnabled) {
-        logger.debug("origin serviceRes code: {}, body: {}", resStatus, originResBodyBuffer.toString())
+        logger.debug(
+          "origin serviceRes code: {}, body: {}",
+          resStatus,
+          originResBodyBuffer.toString()
+        )
       }
 
       ctx.response().putHeader(
@@ -116,12 +120,16 @@ class HttpServerVerticle : CoroutineVerticle() {
     val paramPrefixSeparator = Config.paramPrefixSeparator
     val headers = MultiMap.caseInsensitiveMultiMap()
     val query = MultiMap.caseInsensitiveMultiMap()
-    val newBody = JsonObject()
+    val newJsonBody = JsonObject()
+    var newNonJsonBody: Buffer? = null
     for ((k, v) in oneinBody.map) {
-      if (v != null) {
+      if (k == Config.instance.reqBodyKey) {
+        // origin request body is non-jsonObject
+        newNonJsonBody = Json.encodeToBuffer(v)
+      } else if (v != null) {
         if (k.firstOrNull() == paramPrefixSeparator) {
-          val strValue = v.toString()
           // _paramType_paramName => ["", paramType, paramName]
+          val strValue = v.toString()
           val parts = k.split(paramPrefixSeparator, ignoreCase = false, limit = 3)
           if (parts.size == 3) {
             val paramType = parts[1]
@@ -133,8 +141,10 @@ class HttpServerVerticle : CoroutineVerticle() {
               else -> logger.warn("invalid param: [{}={}]", k, v)
             }
           } else logger.warn("invalid param: [{}={}]", k, v)
+        } else {
+          // normal json body param
+          newJsonBody.put(k, v)
         }
-        newBody.put(k, v)
       }
     }
     return UnwrappedOneinReq(
@@ -142,7 +152,7 @@ class HttpServerVerticle : CoroutineVerticle() {
       method,
       if (headers.isEmpty) null else headers,
       if (query.isEmpty) null else query,
-      if (newBody.isEmpty) null else newBody
+      newNonJsonBody ?: newJsonBody.toBuffer()
     )
   }
 

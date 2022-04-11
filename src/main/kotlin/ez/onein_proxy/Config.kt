@@ -25,6 +25,11 @@ class Config {
   var timeout = 10000L
 
   /**
+   * 当请求报文含有此字段时，表示原始请求报文不是jsonObject（可能为数组或primitive type等）
+   */
+  var reqBodyKey = "_v"
+
+  /**
    * 当后端服务返回非jsonObject报文体时，用此key进行包装（{key: body}）
    */
   var resBodyKey = "_jsonBody"
