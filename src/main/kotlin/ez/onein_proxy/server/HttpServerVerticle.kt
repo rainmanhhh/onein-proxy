@@ -78,9 +78,13 @@ class HttpServerVerticle : CoroutineVerticle() {
         else targetReq.sendJsonObject(unwrappedOneinReq.body).await()
 
       val resStatus = serviceRes.statusCode()
+      val originResBodyBuffer = serviceRes.bodyAsBuffer()
       val resBodyBuffer =
-        if (resStatus < 200 || resStatus >= 400) serviceRes.bodyAsBuffer()
-        else wrapServiceResBody(serviceRes.bodyAsBuffer()).toBuffer()
+        if (resStatus < 200 || resStatus >= 400) originResBodyBuffer
+        else wrapServiceResBody(originResBodyBuffer).toBuffer()
+      if (logger.isDebugEnabled) {
+        logger.debug("origin serviceRes code: {}, body: {}", resStatus, originResBodyBuffer.toString())
+      }
 
       ctx.response().putHeader(
         HttpHeaders.CONTENT_TYPE, "application/json;charset=utf-8"
