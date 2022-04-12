@@ -23,11 +23,11 @@
     </RollingFile>
   </Appenders>
   <Loggers>
-<!--    <Logger name="ez" level="debug" additivity="false">-->
-<!--      <AppenderRef ref="RollingFile"/>-->
-<!--    </Logger>-->
+    <Logger name="ez" level="debug" additivity="false">
+      <AppenderRef ref="Console"/>
+    </Logger>
     <Root level="info">
-      <AppenderRef ref="RollingFile"/>
+      <AppenderRef ref="Console"/>
     </Root>
   </Loggers>
 </Configuration>
