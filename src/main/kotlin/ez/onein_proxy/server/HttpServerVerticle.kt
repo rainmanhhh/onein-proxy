@@ -18,7 +18,6 @@ import io.vertx.ext.web.handler.BodyHandler
 import io.vertx.ext.web.handler.FaviconHandler
 import io.vertx.ext.web.handler.LoggerHandler
 import io.vertx.ext.web.handler.TimeoutHandler
-import io.vertx.kotlin.core.json.jsonObjectOf
 import io.vertx.kotlin.coroutines.CoroutineVerticle
 import io.vertx.kotlin.coroutines.await
 import kotlinx.coroutines.launch
@@ -81,7 +80,7 @@ class HttpServerVerticle : CoroutineVerticle() {
       val originResBodyBuffer = serviceRes.bodyAsBuffer()
       val resBodyBuffer =
         if (resStatus < 200 || resStatus >= 400) originResBodyBuffer
-        else wrapServiceResBody(originResBodyBuffer).toBuffer()
+        else wrapServiceResBody(originResBodyBuffer, resStatus).toBuffer()
       if (logger.isDebugEnabled) {
         logger.debug(
           "origin serviceRes code: {}, body: {}",
@@ -114,7 +113,7 @@ class HttpServerVerticle : CoroutineVerticle() {
     val method = validHttpMethods[methodStr.uppercase()]
       ?: throw HttpException(HttpResponseStatus.METHOD_NOT_ALLOWED.code(), methodStr)
     val headers = ctx.request().headers()
-    val oneinBody = ctx.bodyAsJson
+    val oneinBody = ctx.body().asJsonObject()
     logger.debug("originPath: {}, oneinBody: {}", originPath, oneinBody)
     if (oneinBody == null)
       return UnwrappedOneinReq(path, method, headers, null, null)
@@ -156,10 +155,13 @@ class HttpServerVerticle : CoroutineVerticle() {
     )
   }
 
-  private fun wrapServiceResBody(buffer: Buffer?): JsonObject {
+  private fun wrapServiceResBody(buffer: Buffer?, resStatus: Int): JsonObject {
     val decodeValue = if (buffer == null) null else Json.decodeValue(buffer)
-    val jsonObj = jsonObjectOf(cfg.resBodyKey to decodeValue)
-    return JsonObject(wrapPrimitiveArrays(jsonObj.map))
+    val map = mutableMapOf(
+      cfg.resCodeKey to resStatus,
+      cfg.resBodyKey to decodeValue
+    )
+    return JsonObject(wrapPrimitiveArrays(map))
   }
 
   private fun wrapPrimitiveArrays(root: MutableMap<String, Any?>?): MutableMap<String, Any?>? {
@@ -175,6 +177,7 @@ class HttpServerVerticle : CoroutineVerticle() {
         @Suppress("UNCHECKED_CAST")
         wrapPrimitiveArrays(value as MutableMap<String, Any?>)
       }
+      // else: not list or map, ignore
     }
     return root
   }

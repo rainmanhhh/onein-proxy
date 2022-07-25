@@ -30,7 +30,12 @@ class Config {
   var reqBodyKey = "_v"
 
   /**
-   * 当后端服务返回非jsonObject报文体时，用此key进行包装（{key: body}）
+   * 后端返回的http status code固定用此key包装，与body合并返回（{resCodeKey: code, resBodyKey: body}）
+   */
+  var resCodeKey = "status"
+
+  /**
+   * 后端服务返回的报文体固定用此key进行包装，与code合并返回（{resCodeKey: code, resBodyKey: body}）
    */
   var resBodyKey = "_jsonBody"
 
